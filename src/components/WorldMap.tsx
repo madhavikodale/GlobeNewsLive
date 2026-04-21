@@ -248,6 +248,7 @@ export default function WorldMap({
     Map<string, { marker: maplibregl.Marker; element: HTMLDivElement }>
   >(new Map());
   const [loaded, setLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
 
   // Fetch flight data with real-time updates (5 second refresh for smoother movement)
@@ -278,7 +279,7 @@ export default function WorldMap({
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+      style: "https://demotiles.maplibre.org/style.json",
       center: [30, 25],
       zoom: 2.5,
       minZoom: 1.5,
@@ -296,7 +297,23 @@ export default function WorldMap({
       "bottom-right",
     );
 
+    // Add timeout for map loading
+    const loadTimeout = setTimeout(() => {
+      if (!loaded) {
+        setMapError("Map style failed to load. Check your internet connection.");
+        setLoaded(true); // Show content anyway
+      }
+    }, 10000);
+
+    map.current.on("error", (e) => {
+      console.error("Map error:", e);
+      setMapError("Failed to load map tiles. Check your internet connection.");
+      clearTimeout(loadTimeout);
+      setLoaded(true);
+    });
+
     map.current.on("load", () => {
+      clearTimeout(loadTimeout);
       setLoaded(true);
 
       // Add trade routes source and layer
@@ -1271,6 +1288,36 @@ export default function WorldMap({
 
       {/* Map container */}
       <div ref={mapContainer} className="flex-1 min-h-[300px]" />
+
+      {/* Loading overlay */}
+      {!loaded && !mapError && (
+        <div className="absolute inset-0 bg-[#0a1628] flex flex-col items-center justify-center z-20">
+          <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: 'linear-gradient(rgba(0,255,136,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }} />
+          <div className="w-2 h-2 bg-accent-green rounded-full animate-pulse mb-3" />
+          <span className="text-[10px] text-white font-mono">Loading map data...</span>
+          <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+            <div className="h-full bg-accent-green animate-[loading_1.5s_ease-in-out_infinite]" style={{ width: '60%' }} />
+          </div>
+        </div>
+      )}
+
+      {/* Error overlay */}
+      {mapError && (
+        <div className="absolute inset-0 bg-[#0a1628] flex flex-col items-center justify-center z-20">
+          <span className="text-2xl mb-2">⚠️</span>
+          <span className="text-[11px] text-red-400 font-mono mb-1">Map Error</span>
+          <span className="text-[9px] text-gray-400 text-center max-w-[200px]">{mapError}</span>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-3 px-3 py-1 rounded text-[9px] font-mono bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition"
+          >
+            Reload Page
+          </button>
+        </div>
+      )}
 
       {/* Legend overlay */}
       <div className="absolute bottom-2 left-2 bg-void/90 backdrop-blur-sm rounded p-2 text-[9px] space-y-1 z-10 max-w-[180px]">

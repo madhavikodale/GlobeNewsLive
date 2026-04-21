@@ -10,7 +10,9 @@ import MarketTicker from '@/components/MarketTicker';
 import PredictionPanel from '@/components/PredictionPanel';
 import TrackingPanel from '@/components/TrackingPanel';
 import TradingChart from '@/components/TradingChart';
-import MobileNav from '@/components/MobileNav';
+import WaterfallAlerts from '@/components/WaterfallAlerts';
+import SourceHealth from '@/components/SourceHealth';
+import MobileNavEnhanced from '@/components/MobileNavEnhanced';
 import StatsBar from '@/components/StatsBar';
 import SituationBrief from '@/components/SituationBrief';
 import DefconIndicator from '@/components/DefconIndicator';
@@ -30,9 +32,22 @@ import HotspotStreams from '@/components/HotspotStreams';
 import CustomDashboard from '@/components/CustomDashboard';
 import MapStreams from '@/components/MapStreams';
 import RiskDashboard from '@/components/RiskDashboard';
+import { usePersistentTimeFilter } from '@/hooks/usePersistentTimeFilter';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import SentimentMeter from '@/components/SentimentMeter';
+import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp';
+import ExportPanel from '@/components/ExportPanel';
+import BookmarkManager, { useSignalBookmarks, BookmarkButton } from '@/components/BookmarkManager';
+import FullscreenToggle from '@/components/FullscreenToggle';
+import RefreshCountdown from '@/components/RefreshCountdown';
+import CustomAlertsPanel, { useCustomAlerts } from '@/components/CustomAlertsPanel';
+import SignalComparison from '@/components/SignalComparison';
+import AdvancedFilters from '@/components/AdvancedFilters';
+import EmailNotifications from '@/components/EmailNotifications';
+import CustomVideoWall from '@/components/CustomVideoWall';
 import { useLanguage } from '@/components/LanguageSelector';
 import CommandPalette from '@/components/CommandPalette';
+import PushNotificationManager from '@/components/PushNotificationManager';
 import BreakingNewsBanner from '@/components/BreakingNewsBanner';
 import TVMode from '@/components/TVMode';
 import { Signal, MarketData, PredictionMarket, ThreatLevel } from '@/types';
@@ -72,7 +87,7 @@ function playAlertSound() {
 }
 
 type ViewMode = 'dashboard' | 'warroom';
-type MobileView = 'feed' | 'map' | 'markets' | 'tracking';
+type MobileView = 'feed' | 'map' | 'markets' | 'tracking' | 'alerts';
 
 export default function Dashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
@@ -82,7 +97,7 @@ export default function Dashboard() {
     'ai-centers', 'fires', 'gps-jamming', 'outages', 'cyber', 
     'weather', 'displacement', 'clusters'
   ]);
-  const [timeFilter, setTimeFilter] = useState('24h');
+  const { timeFilter, setTimeFilter, isLoaded: timeFilterLoaded } = usePersistentTimeFilter('24h');
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isClient, setIsClient] = useState(false);
   const [prevCriticalCount, setPrevCriticalCount] = useState(0);
@@ -90,14 +105,32 @@ export default function Dashboard() {
   const [mobileView, setMobileView] = useState<MobileView>('feed');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [tvMode, setTvMode] = useState(false);
+  const [videoWallOpen, setVideoWallOpen] = useState(false);
   
   // Multi-language support
   const { language, changeLanguage, isRTL } = useLanguage();
 
+  // Custom hooks
+  const { bookmarks, toggleBookmark, isBookmarked, clearBookmarks, bookmarkCount } = useSignalBookmarks();
+  const { alerts, addAlert, removeAlert, toggleAlert, checkMatches, enabledCount } = useCustomAlerts();
+
   // Theme toggle
   const { isDark, toggle: toggleTheme } = useTheme();
 
-  useEffect(() => { setIsClient(true); }, []);
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Register service worker for push notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('[SW] Registered:', registration.scope);
+        })
+        .catch((err) => {
+          console.error('[SW] Registration failed:', err);
+        });
+    }
+  }, []);
 
   // Command Palette shortcut
   useEffect(() => {
@@ -110,6 +143,19 @@ export default function Dashboard() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearch: () => setCommandPaletteOpen(true),
+    onViewChange: (view) => setMobileView(view as MobileView),
+    onThemeToggle: toggleTheme,
+    onSoundToggle: () => setSoundEnabled(!soundEnabled),
+    onRefresh: () => window.location.reload(),
+    onEscape: () => {
+      setCommandPaletteOpen(false);
+      setTvMode(false);
+    }
+  });
 
   // Fetch data
   const { data: signalsData, isLoading: signalsLoading, isValidating: signalsValidating } = useSWR<{ signals: Signal[] }>(
@@ -327,6 +373,9 @@ export default function Dashboard() {
       {/* TV Mode */}
       <TVMode isActive={tvMode} onExit={() => setTvMode(false)} />
 
+      {/* Custom Video Wall */}
+      <CustomVideoWall isOpen={videoWallOpen} onClose={() => setVideoWallOpen(false)} />
+
       {/* Breaking News Banner */}
       <BreakingNewsBanner signals={signals} />
 
@@ -351,8 +400,23 @@ export default function Dashboard() {
           >
             📺 TV MODE
           </button>
+          <button
+            onClick={() => setVideoWallOpen(true)}
+            className="px-3 py-1 rounded text-[10px] font-mono text-text-dim hover:text-white hover:bg-white/5"
+          >
+            🎬 VIDEO WALL
+          </button>
         </div>
         <div className="flex items-center gap-3">
+          <KeyboardShortcutsHelp />
+          <ExportPanel signals={signals} />
+          <BookmarkManager signals={signals} bookmarks={bookmarks} onClear={clearBookmarks} onToggle={toggleBookmark} />
+          <FullscreenToggle />
+          <CustomAlertsPanel alerts={alerts} onAdd={addAlert} onRemove={removeAlert} onToggle={toggleAlert} />
+          <SignalComparison signals={signals} />
+          <AdvancedFilters signals={signals} onFilterChange={(filtered) => console.log('Filtered:', filtered.length)} />
+          <EmailNotifications signals={signals} />
+          <PushNotificationManager signals={signals} criticalCount={criticalCount} />
           <button
             onClick={() => setCommandPaletteOpen(true)}
             className="flex items-center gap-2 px-3 py-1 rounded text-[10px] font-mono text-text-dim hover:text-white border border-border-subtle hover:border-accent-green/30 transition-colors"
@@ -399,7 +463,7 @@ export default function Dashboard() {
       </div>
 
       {/* Mobile Layout */}
-      <main className="lg:hidden flex-1 overflow-hidden pb-16">
+      <main className="lg:hidden flex-1 overflow-hidden pb-20">
         {mobileView === 'feed' && <SignalFeed signals={signals} loading={signalsLoading || signalsValidating} onSignalClick={handleSignalClick} />}
         {mobileView === 'map' && <div className="h-full p-2"><WorldMap signals={signals} activeLayers={activeLayers} onLayerToggle={handleLayerToggle} earthquakes={earthquakes} /></div>}
         {mobileView === 'markets' && (
@@ -433,9 +497,50 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+        {mobileView === 'alerts' && (
+          <div className="h-full overflow-y-auto p-2 space-y-2">
+            {/* 🌊 Waterfall Alerts - Ground Station Style */}
+            <div className="h-48">
+              <WaterfallAlerts signals={signals} maxAlerts={15} />
+            </div>
+            
+            {/* 📡 Source Health Monitor */}
+            <SourceHealth refreshInterval={60000} />
+            
+            {/* Critical Alerts List */}
+            <div className="bg-elevated rounded-lg border border-border-subtle">
+              <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
+                <span className="font-mono text-[11px] font-bold text-accent-red">🚨 CRITICAL ALERTS</span>
+                <span className="text-[10px] text-text-dim font-mono">{signals.filter(s => s.severity === 'CRITICAL').length}</span>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {signals.filter(s => s.severity === 'CRITICAL').slice(0, 10).map(signal => (
+                  <div key={signal.id} className="px-3 py-2 border-b border-border-subtle last:border-b-0 hover:bg-white/5 transition-colors">
+                    <div className="flex items-start gap-2">
+                      <span className="text-accent-red text-xs mt-0.5">●</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] text-white font-medium truncate">{signal.title}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] text-text-dim">{signal.source}</span>
+                          <span className="text-[9px] text-text-dim">•</span>
+                          <span className="text-[9px] text-text-dim">{signal.timeAgo}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {signals.filter(s => s.severity === 'CRITICAL').length === 0 && (
+                  <div className="px-3 py-4 text-center text-[11px] text-text-dim">
+                    No critical alerts at this time
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
-      <MobileNav activeView={mobileView} onViewChange={setMobileView} criticalCount={criticalCount} />
+      <MobileNavEnhanced activeView={mobileView} onViewChange={setMobileView} criticalCount={criticalCount} />
 
       <div className="hidden lg:block">
         <StatsBar activeConflicts={ACTIVE_CONFLICTS.length} militaryAlerts={militaryCount} highSeverity={highCount} criticalSeverity={criticalCount} timeFilter={timeFilter} onTimeFilterChange={setTimeFilter} />

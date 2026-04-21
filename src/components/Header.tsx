@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ThreatLevel } from '@/types';
 import LanguageSelector from './LanguageSelector';
@@ -113,17 +114,28 @@ export default function Header({ threatLevel, breakingNews, lastUpdate, signalCo
       <div className="hidden sm:flex px-4 py-2 items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-accent-green/30 to-accent-blue/20 flex items-center justify-center border border-accent-green/30">
-            <span className="text-accent-green text-xl">🌐</span>
-            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-accent-green rounded-full border-2 border-elevated animate-pulse" />
-          </div>
-          <div>
-            <h1 className="font-mono text-sm font-bold tracking-wider text-accent-green flex items-center gap-2">
-              GLOBENEWS
-              <span className="px-1.5 py-0.5 bg-accent-red/20 text-[8px] rounded border border-accent-red/30 text-accent-red animate-pulse">LIVE</span>
-            </h1>
-            <p className="text-[9px] text-text-muted tracking-wide">{signalCount} ACTIVE SIGNALS</p>
-          </div>
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition">
+            <div className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-accent-green/30 to-accent-blue/20 flex items-center justify-center border border-accent-green/30">
+              <span className="text-accent-green text-xl">🌐</span>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-accent-green rounded-full border-2 border-elevated animate-pulse" />
+            </div>
+            <div>
+              <h1 className="font-mono text-sm font-bold tracking-wider text-accent-green flex items-center gap-2">
+                GLOBENEWS
+                <span className="px-1.5 py-0.5 bg-accent-red/20 text-[8px] rounded border border-accent-red/30 text-accent-red animate-pulse">LIVE</span>
+              </h1>
+              <p className="text-[9px] text-text-muted tracking-wide">{signalCount} ACTIVE SIGNALS</p>
+            </div>
+          </Link>
+          
+          {/* Pro Link */}
+          <Link 
+            href="/pro" 
+            className="ml-4 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg text-[10px] font-mono text-blue-400 hover:text-blue-300 transition flex items-center gap-1.5"
+          >
+            <span>⚡</span>
+            <span>PRO</span>
+          </Link>
         </div>
         
         {/* Threat Level */}

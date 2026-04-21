@@ -796,7 +796,7 @@ export default function CustomDashboard({
       case "risk-dashboard":
         return <RiskDashboard />;
       case "sentiment-meter":
-        return <SentimentMeter />;
+        return <SentimentMeter signals={signals} />;
       case "flight-radar":
         return <FlightRadar />;
       case "military-tracker":
