@@ -50,6 +50,7 @@ import CommandPalette from '@/components/CommandPalette';
 import PushNotificationManager from '@/components/PushNotificationManager';
 import WorldMonitorLayout from '@/components/WorldMonitorLayout';
 import MapFocusView from '@/components/MapFocusView';
+import { MapViewProvider } from '@/contexts/MapViewContext';
 import BreakingNewsBanner from '@/components/BreakingNewsBanner';
 import TVMode from '@/components/TVMode';
 import { Signal, MarketData, PredictionMarket, ThreatLevel } from '@/types';
@@ -365,6 +366,7 @@ export default function Dashboard() {
     return (
       <div className="h-screen flex flex-col bg-void overflow-hidden">
         <BreakingNewsBanner signals={signals} />
+        <MapViewProvider>
         <MapFocusView
           signals={signals}
           conflicts={conflicts}
@@ -373,6 +375,7 @@ export default function Dashboard() {
           onLayerToggle={handleLayerToggle}
           onExit={() => setViewMode('dashboard')}
         />
+        </MapViewProvider>
       </div>
     );
   }

@@ -1,6 +1,8 @@
 'use client';
+import Globe3DView from './Globe3DView';
+import { useMapView } from '@/contexts/MapViewContext';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import WorldMap from './WorldMap';
 import type { Signal } from '@/types';
 
@@ -71,11 +73,15 @@ const REGIONS = [
 ];
 
 export default function MapFocusView({ signals, conflicts, earthquakes, activeLayers, onLayerToggle, onExit }: MapFocusViewProps) {
+  const { mapView, setMapView } = useMapView();
+  const [mounted, setMounted] = useState(false);
   const [timeFilter, setTimeFilter] = useState('24h');
   const [region, setRegion] = useState('global');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [search, setSearch] = useState('');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  useEffect(() => { setMounted(true); }, []);
 
   const toggleGroup = (group: string) => {
     setCollapsedGroups(prev => {
@@ -215,17 +221,58 @@ export default function MapFocusView({ signals, conflicts, earthquakes, activeLa
           </div>
         )}
 
-        {/* Full map */}
+        {/* Full map with 2D/3D toggle */}
         <div className="flex-1 relative overflow-hidden">
-          <WorldMap
-            signals={signals}
-            activeLayers={activeLayers}
-            onLayerToggle={onLayerToggle}
-            earthquakes={earthquakes}
-          />
+
+          {/* 2D/3D toggle — top center */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center bg-black/80 border border-white/15 rounded-lg p-1 backdrop-blur-sm shadow-lg">
+            <button
+              onClick={() => setMapView('2D')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-[10px] font-mono font-bold transition-all duration-200 ${
+                mapView === '2D'
+                  ? 'bg-accent-blue text-black shadow-[0_0_12px_rgba(0,204,255,0.5)]'
+                  : 'text-white/50 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+              </svg>
+              <span>2D</span>
+            </button>
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
+            <button
+              onClick={() => setMapView('3D')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-[10px] font-mono font-bold transition-all duration-200 ${
+                mapView === '3D'
+                  ? 'bg-accent-green text-black shadow-[0_0_12px_rgba(0,255,136,0.5)]'
+                  : 'text-white/50 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>
+              </svg>
+              <span>3D</span>
+            </button>
+          </div>
+
+          {/* 2D Map */}
+          <div className={`absolute inset-0 transition-opacity duration-300 ${mapView === '2D' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+            <WorldMap
+              signals={signals}
+              activeLayers={activeLayers}
+              onLayerToggle={onLayerToggle}
+              earthquakes={earthquakes}
+            />
+          </div>
+
+          {/* 3D Globe */}
+          <div className={`absolute inset-0 transition-opacity duration-300 ${mapView === '3D' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+            {mounted && <Globe3DView signals={signals} />}
+          </div>
+
           {/* Signal count overlay */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/70 border border-white/10 rounded-lg backdrop-blur-sm">
-            <span className="text-[9px] font-mono text-text-dim">{signals.length} signals · {activeCount} layers active · {timeFilter}</span>
+          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-black/70 border border-white/10 rounded-lg backdrop-blur-sm">
+            <span className="text-[9px] font-mono text-text-dim">{signals.length} signals · {activeCount} layers active · {timeFilter} · {mapView}</span>
           </div>
         </div>
       </div>
