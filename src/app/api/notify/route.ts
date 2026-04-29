@@ -7,6 +7,7 @@ const SUBSCRIBERS = [
   '353201749',  // Anil Chinchawale
   '434349539',  // AKXinFin
   '442140952',  // Ritesh
+  '8788728561', // Madhavi K
 ];
 
 // Track sent signal IDs to avoid duplicates
