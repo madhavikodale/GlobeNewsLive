@@ -49,6 +49,13 @@ export const WIDGET_REGISTRY: Omit<WidgetConfig, 'visible'>[] = [
     defaultSize: { w: 6, h: 10 },
   },
   {
+    id: 'tech-globe',
+    name: 'Tech Globe 3D',
+    icon: '🌐',
+    description: 'WorldMonitor-style 3D globe with glowing connection arcs and tech nodes',
+    defaultSize: { w: 6, h: 10 },
+  },
+  {
     id: 'globe-3d',
     name: '3D Globe',
     icon: '🌐',

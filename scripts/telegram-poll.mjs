@@ -1,4 +1,9 @@
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8142303105:AAHWg6zWTNTKnS3H70hdFpJsZLtoe4AN94A';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+if (!TELEGRAM_BOT_TOKEN) {
+  console.error('❌ Error: TELEGRAM_BOT_TOKEN environment variable is required');
+  console.error('   Set it before running: TELEGRAM_BOT_TOKEN=your_token node scripts/telegram-poll.mjs');
+  process.exit(1);
+}
 
 let lastUpdateId = 0;
 

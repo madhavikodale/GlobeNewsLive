@@ -4,8 +4,13 @@
  * Monitors signal feed for Iran-related news and sends Telegram alerts
  */
 
-const TELEGRAM_BOT_TOKEN = '8762819044:AAG0Aguel739eHCSL-S8cixe08TfSOPiPnU';
-const TELEGRAM_CHAT_ID = '353201749';
+const TELEGRAM_BOT_TOKEN = process.env.IRAN_ALERT_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '353201749';
+if (!TELEGRAM_BOT_TOKEN) {
+  console.error('❌ Error: IRAN_ALERT_BOT_TOKEN (or TELEGRAM_BOT_TOKEN) environment variable is required');
+  process.exit(1);
+}
+
 const FEED_URL = 'https://feed.xdc.network/api/signals';
 const STATE_FILE = '/tmp/iran-alert-state.json';
 

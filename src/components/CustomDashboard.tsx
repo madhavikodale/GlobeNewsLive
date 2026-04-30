@@ -1,5 +1,5 @@
 "use client";
-
+import TechGlobe3D from "./TechGlobe3D";
 import {
   useState,
   useEffect,
@@ -807,7 +807,9 @@ export default function CustomDashboard({
         return <ChatAnalystPanel />;
       case "nk-missiles":
         return <NKMissilePanel />;
-      case "globe-3d":
+      case "tech-globe":
+        return <TechGlobe3D />;
+      case "tech-globe": return <TechGlobe3D />; case "tech-globe": return <TechGlobe3D />; case "globe-3d":
         return <Globe3DView signals={signals} />;
       case "risk-dashboard":
         return <RiskDashboard />;
