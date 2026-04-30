@@ -49,13 +49,24 @@ export async function POST(request: NextRequest) {
 async function sendTelegramMessage(chatId: number, text: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
-  await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-    }),
-  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        // No parse_mode — plain text avoids all escaping issues
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`[Telegram] HTTP ${res.status}: ${err}`);
+    } else {
+      console.log(`[Telegram] Sent to ${chatId}: ${text.substring(0, 60)}...`);
+    }
+  } catch (error) {
+    console.error('[Telegram] Send failed:', error);
+  }
 }
