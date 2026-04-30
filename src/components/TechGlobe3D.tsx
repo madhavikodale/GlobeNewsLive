@@ -16,7 +16,7 @@ const CONNECTIONS = [
   { from: { lat: 51.5, lon: -0.1 }, to: { lat: 25.2, lon: 55.3 }, color: '#00ffff', speed: 1.5 },
 ];
 
-function latLonToVec3(lat, lon, radius) {
+function latLonToVec3(lat: number, lon: number, radius: number) {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
   return new THREE.Vector3(
@@ -26,8 +26,8 @@ function latLonToVec3(lat, lon, radius) {
   );
 }
 
-function createArcPoints(from, to, numPoints = 100, arcHeight = 0.4) {
-  const points = [];
+function createArcPoints(from: THREE.Vector3, to: THREE.Vector3, numPoints = 100, arcHeight = 0.4) {
+  const points: THREE.Vector3[] = [];
   const mid = from.clone().add(to).multiplyScalar(0.5);
   const dist = from.distanceTo(to);
   mid.normalize().multiplyScalar(from.length() + dist * arcHeight);
@@ -43,8 +43,8 @@ function createArcPoints(from, to, numPoints = 100, arcHeight = 0.4) {
 }
 
 export default function TechGlobe3D() {
-  const mountRef = useRef(null);
-  const particlesRef = useRef([]);
+  const mountRef = useRef<HTMLDivElement>(null);
+  const particlesRef = useRef<{ mesh: THREE.Mesh; pts: THREE.Vector3[]; progress: number; speed: number }[]>([]);
 
   useEffect(() => {
     if (!mountRef.current) return;

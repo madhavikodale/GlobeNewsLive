@@ -6,13 +6,23 @@ const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@globenews.live';
 
-// Configure web-push
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    VAPID_SUBJECT,
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
-  );
+function isValidVapidKey(key: string): boolean {
+  // VAPID public key is base64url-encoded and ~87 chars for 65 bytes
+  // Private key is ~43 chars for 32 bytes
+  return key.length > 40 && !key.includes('your_') && !key.includes('placeholder');
+}
+
+// Configure web-push only if keys are valid
+if (isValidVapidKey(VAPID_PUBLIC_KEY) && isValidVapidKey(VAPID_PRIVATE_KEY)) {
+  try {
+    webpush.setVapidDetails(
+      VAPID_SUBJECT,
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY
+    );
+  } catch (e) {
+    console.warn('[Push] Failed to set VAPID details:', e);
+  }
 }
 
 // In-memory store for subscriptions (use Redis/DB in production)
