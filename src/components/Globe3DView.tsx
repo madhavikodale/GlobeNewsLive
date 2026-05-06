@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Signal } from '@/types';
 
-interface Globe3DViewProps { signals?: Signal[]; }
+interface Globe3DViewProps { signals?: Signal[]; enableArcs?: boolean; }
 
 const ALL_LAYERS = ['signals','flights','earthquakes','ships','cyber','fires','military'] as const;
 type Layer = typeof ALL_LAYERS[number];
@@ -24,7 +24,7 @@ const TEXTURE_PRESETS = [
   { id: 'marble', label: 'Blue',  url: '/textures/earth-blue-marble.jpg' },
 ];
 
-export default function Globe3DView({ signals = [] }: Globe3DViewProps) {
+export default function Globe3DView({ signals = [], enableArcs = true }: Globe3DViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -173,6 +173,7 @@ export default function Globe3DView({ signals = [] }: Globe3DViewProps) {
   }, [activeLayers, signals, flights, earthquakes, ships, cyberThreats, fires, militaryAircraft]);
 
   const getArcs = useCallback(() => {
+    if (!enableArcs) return []; // NEW: Return empty array when disabled
     const arcs: any[] = [
       {startLat:32,startLng:35,endLat:26.8,endLng:57,color:'#ff2020cc'},
       {startLat:14.5,startLng:44.2,endLat:12.4,endLng:43.1,color:'#ff8800cc'},
@@ -186,7 +187,7 @@ export default function Globe3DView({ signals = [] }: Globe3DViewProps) {
       });
     }
     return arcs;
-  }, [activeLayers, cyberThreats]);
+  }, [activeLayers, cyberThreats, enableArcs]);
 
   const makeEl = useCallback((marker: any) => {
     const el = document.createElement('div');
